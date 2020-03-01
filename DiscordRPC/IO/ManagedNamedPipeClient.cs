@@ -121,17 +121,9 @@ namespace DiscordRPC.IO
             if (_isDisposed)
                 throw new ObjectDisposedException("_stream");
 
-            //If we are sandbox but we dont support sandbox, then skip
-            string sandbox = isSandbox ? GetPipeSandbox() : "";
-            if (isSandbox && sandbox == null)
-            {
-                Logger.Trace("Skipping sandbox connection.");
-                return false;
-            }
-
             //Prepare the pipename
-            Logger.Trace("Connection Attempt " + pipe + " (" + sandbox + ")");
-            string pipename = GetPipeName(pipe, sandbox);
+            Logger.Trace("Connection Attempt " + pipe);
+            string pipename = GetPipeName(pipe);
 
             try
             {
@@ -453,56 +445,23 @@ namespace DiscordRPC.IO
         /// <param name="pipe">The pipe number.</param>
         /// <param name="sandbox">The sandbox the pipe is in. Leave blank for no sandbox.</param>
         /// <returns></returns>
-        public static string GetPipeName(int pipe, string sandbox = "")
-        {
-            if (!IsUnix()) return sandbox + string.Format(PIPE_NAME, pipe);
-            return Path.Combine(GetTemporaryDirectory(), sandbox + string.Format(PIPE_NAME, pipe));
-        }
-
-        /// <summary>
-        /// Gets the name of the possible sandbox enviroment the pipe might be located within. If the platform doesn't support sandboxed Discord, then it will return null.
-        /// </summary>
-        /// <returns></returns>
-        public static string GetPipeSandbox()
-        {
-            switch (Environment.OSVersion.Platform)
-            {
-                default:
-                    return null;
-                case PlatformID.Unix:
-                    return "snap.discord/";
+        public static string GetPipeName(int pipe, string sandbox = "") {
+            if(IsUnix()) {
+                return "/run/user/1000/" + string.Format(PIPE_NAME, pipe);
+            } else {
+                return string.Format(PIPE_NAME, pipe);
             }
-        }
-
-        /// <summary>
-        /// Gets the temporary path for the current enviroment. Only applicable for UNIX based systems.
-        /// </summary>
-        /// <returns></returns>
-        private static string GetTemporaryDirectory()
-        {
-            string temp = null;
-            temp = temp ?? Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
-            temp = temp ?? Environment.GetEnvironmentVariable("TMPDIR");
-            temp = temp ?? Environment.GetEnvironmentVariable("TMP");
-            temp = temp ?? Environment.GetEnvironmentVariable("TEMP");
-            temp = temp ?? "/tmp";
-            return temp;
         }
 
         /// <summary>
         /// Returns true if the current OS platform is Unix based (Unix or MacOSX).
         /// </summary>
         /// <returns></returns>
-        public static bool IsUnix()
-        {
-            switch (Environment.OSVersion.Platform)
-            {
-                default:
-                    return false;
-
-                case PlatformID.Unix:
-                case PlatformID.MacOSX:
-                    return true;
+        public static bool IsUnix() {
+            if(Type.GetType("Mono.Runtime") != null) {
+                return true;
+            } else {
+                return false;
             }
         }
     }

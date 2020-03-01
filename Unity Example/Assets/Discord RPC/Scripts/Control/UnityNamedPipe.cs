@@ -194,36 +194,22 @@ namespace DiscordRPC.Unity
             return false;
         }
 
-        private string GetPipeName(int pipe, string sandbox = "")
-        {
-            switch (Environment.OSVersion.Platform)
-            {
-                default:
-
-#if !UNITY_EDITOR_OSX
-                case PlatformID.Win32NT:
-                case PlatformID.Win32S:
-                case PlatformID.Win32Windows:
-                case PlatformID.WinCE:
-                    Logger.Trace("PIPE WIN");
-                    return sandbox + string.Format(PIPE_NAME, pipe);
-#endif
-
-                case PlatformID.Unix:
-                case PlatformID.MacOSX:
-                    Logger.Trace("PIPE UNIX / MACOSX");
-                    return Path.Combine(GetEnviromentTemp(), sandbox + string.Format(PIPE_NAME, pipe));
+        private string GetPipeName(int pipe, string sandbox = "") {
+            if(Type.GetType("Mono.Runtime") != null) {
+                Console.WriteLine("Windows Pipe?");
+                return sandbox + string.Format(PIPE_NAME, pipe);
+            } else {
+                Console.WriteLine("Linux Pipe?");
+                return Path.Combine(GetEnviromentTemp(), sandbox + string.Format(PIPE_NAME, pipe));
             }
         }
 
         private string GetPipeSandbox()
         {
-            switch (Environment.OSVersion.Platform)
-            {
-                default:
-                    return null;
-                case PlatformID.Unix:
-                    return "snap.discord/";
+            if(Type.GetType("Mono.Runtime") != null) {
+                return null;
+            } else {
+                return "snap.discord/";
             }
         }
 
